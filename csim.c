@@ -8,6 +8,7 @@
 #include <stdbool.h> 
 #include <unistd.h>
 
+// struct usde to hold parsed arguments
 struct argStruct {
 	bool helpFlag;
 	bool verboseFlag;
@@ -24,14 +25,16 @@ struct instrStruct {
 	unsigned int size;
 };
 
+// struct for every blork within a set, pred/succ used to form a double
+// link list, more specificlly, a queue, to implement LRU.
 struct blockStruct {
 	bool valid;
 	unsigned long long int tag;
 	int pred;
 	int succ;
-	// LUR TBD
 };
 
+// struct used to hold info for a single set
 struct setStruct {
 	unsigned int front;
 	unsigned int rear;
@@ -49,7 +52,7 @@ struct cacheCountStruct
 struct argStruct parseArguments(int argc, char **argv)
 {
 	/*
-	 * initial the agrument struct, return 1 if args invalid.
+	 * initial the agrument struct, print and abort if args invalid.
 	 */
 	char c;
 	struct argStruct args;
@@ -145,6 +148,7 @@ bool getInstr(FILE *trace_fp, struct instrStruct *instr)
 	}
 }
 
+// LRU implemented with queue, put note back to end, pick front as victim
 void markUsed(struct setStruct *set, int pos)
 {
 	if(pos == set->rear)
@@ -152,16 +156,15 @@ void markUsed(struct setStruct *set, int pos)
 	struct blockStruct *blockArray = set->blocks;
 	int pred = blockArray[pos].pred;
 	int succ = blockArray[pos].succ;
-	// that is it's not at the front
-	if(pred != -1) {
-		blockArray[pred].succ = succ;
-	}
 	blockArray[succ].pred = pred;
 	blockArray[pos].pred = set->rear;
 	blockArray[set->rear].succ = pos;
 	set->rear = pos;
 	if(pos == set->front)
 		set->front = succ;
+	else
+		blockArray[pred].succ = succ;
+
 }
 
 void cacheAccess(unsigned long long int index, 
@@ -173,6 +176,7 @@ void cacheAccess(unsigned long long int index,
 	struct setStruct *set = cache + index;
 	struct blockStruct *blockArray = set->blocks;
 	int setSize = args->associativity;
+	//check if hit
 	for(int i = 0; i < setSize; ++i) 
 		if(blockArray[i].valid && blockArray[i].tag == tag){
 			markUsed(set, i);
@@ -208,20 +212,28 @@ int main(int argc, char **argv)
 	unsigned long long int indexFilter = (1ULL<<(args.setIndexBits+args.blockBits)) - 1;
 	unsigned long long int index = 0;
 	unsigned long long int tag = 0;
+	//fetch instruction and excute within this loop
 	while(getInstr(trace_fp, &instr)) {
 		if(args.verboseFlag)
 			printf("%c %llx,%u\t", instr.type, instr.addr, instr.size);
+
+		// bit manipulation to get tag and index
 		index = (instr.addr & indexFilter) >> args.blockBits;
 		tag = instr.addr >> (args.setIndexBits+args.blockBits);
 		printf("index:%llx, tag:%llx\t",index,tag);
+
+		// access cache once, if M, access again.
 		cacheAccess(index, tag, cache, &args, &cacheCount);
 		if(instr.type == 'M')
 			cacheAccess(index, tag, cache, &args, &cacheCount);
+		
 		if(args.verboseFlag)
 			printf("\n");
 	}
+	// fee allocated memory, file already closed.
 	cacheFree(cache, &args);
 	printSummary(cacheCount.hit, cacheCount.miss, cacheCount.eviction);
 	return 0;
 }
+
 
