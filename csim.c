@@ -98,8 +98,8 @@ struct argStruct parseArguments(int argc, char **argv)
 
 void setInit(struct setStruct *set, const struct argStruct *args)
 {
+	int totalBlocks = args->associativity;
 	set->front = 0;
-	unsigned long long int totalBlocks = args->associativity;
 	set->rear = totalBlocks - 1;
 	set->blocks = calloc(totalBlocks, sizeof(struct blockStruct));
 	struct blockStruct *block = set->blocks;
@@ -160,7 +160,8 @@ void markUsed(struct setStruct *set, int pos)
 	blockArray[pos].pred = set->rear;
 	blockArray[set->rear].succ = pos;
 	set->rear = pos;
-	set->front = succ;
+	if(pos == set->front)
+		set->front = succ;
 }
 
 void cacheAccess(unsigned long long int index, 
@@ -172,15 +173,14 @@ void cacheAccess(unsigned long long int index,
 	struct setStruct *set = cache + index;
 	struct blockStruct *blockArray = set->blocks;
 	int setSize = args->associativity;
-	for(int i = 0; i < setSize; ++i) {
+	for(int i = 0; i < setSize; ++i) 
 		if(blockArray[i].valid && blockArray[i].tag == tag){
-			cacheCount->hit += 1;
 			markUsed(set, i);
 			if(args->verboseFlag)
 				printf("Hit\t");
+			cacheCount->hit += 1;
 			return;
 		}
-	}
 	cacheCount->miss += 1;
 	if(args->verboseFlag)
 		printf("Miss\t");
