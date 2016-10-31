@@ -26,7 +26,7 @@ void transpose_submit(int M, int N, int A[N][M], int B[M][N])
     int ii = 0;
     int i = 0;
     int j = 0;
-    int blockSize = 8;
+    int blockSize = 16;
 
     for(ii = 0; ii < N; ii += blockSize){
         int iBound = ii + blockSize < N ? ii + blockSize : N;
