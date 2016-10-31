@@ -23,20 +23,17 @@ char transpose_submit_desc[] = "Transpose submission";
 void transpose_submit(int M, int N, int A[N][M], int B[M][N])
 {
     printf("size of int:%ld\t,A: %p,B: %p\n",sizeof(int), A, B);
-    int jj = 0;
     int ii = 0;
     int i = 0;
     int j = 0;
     int blockSize = 8;
 
-    for(ii = 0; ii < N; ii += blockSize)
-        for(jj = 0; jj < M; jj += blockSize) {
-            int iBound = ii + blockSize < N ? ii + blockSize : N;
-            int jBound = jj + blockSize < M ? jj + blockSize : M;
+    for(ii = 0; ii < N; ii += blockSize){
+        int iBound = ii + blockSize < N ? ii + blockSize : N;
+        for(j = 0; j < M; ++j)
             for(i = ii; i < iBound; ++i)
-                for(j = jj; j < jBound; ++j)
-                    B[j][i] = A[i][j];
-        }
+                B[j][i] = A[i][j];
+    }
 }
 
 /*
