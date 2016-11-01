@@ -22,19 +22,45 @@ int is_transpose(int M, int N, int A[N][M], int B[M][N]);
 char transpose_submit_desc[] = "Transpose submission";
 void transpose_submit(int M, int N, int A[N][M], int B[M][N])
 {
-    printf("size of int:%ld\t,A: %p,B: %p\n",sizeof(int), A, B);
-    int ii = 0;
-    int i = 0;
-    int j = 0;
-    int blockSize = 16;
-
-    for(ii = 0; ii < N; ii += blockSize){
-        int iBound = ii + blockSize < N ? ii + blockSize : N;
-        for(j = 0; j < M; ++j)
-            for(i = ii; i < iBound; ++i)
-                B[j][i] = A[i][j];
+    int blockSize;
+    int ii, jj, i, j;
+    switch(M) {        
+        case 32:
+            blockSize = 8;
+            break;
+        case 64:
+            blockSize = 4;
+            break;
+        default:
+            blockSize = 16;
+            for(ii = 0; ii < N; ii += blockSize) {
+                int iBound = ii + blockSize < N ? ii + blockSize : N;
+                for(j = 0; j < M; ++j)
+                    for(i = ii; i < iBound; ++i)
+                        B[j][i] = A[i][j];
+            }
+            return;
     }
+
+    int diag = 0;
+    int temp = 0;
+
+    for (jj = 0; jj < N; jj += blockSize)
+        for (ii = 0; ii < N; ii += blockSize)
+            for (i = ii; i < ii + blockSize; ++i) {
+                for (j = jj; j < jj + blockSize; ++j) {
+                    if (i != j)
+                        B[j][i] = A[i][j];
+                     else {
+                        temp = A[i][j];
+                        diag = i;
+                    }
+                }
+                if (ii == jj)
+                    B[diag][diag] = temp;
+            }
 }
+
 
 /*
  * You can define additional transpose functions below. We've defined
