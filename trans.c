@@ -46,9 +46,9 @@ void transpose_submit(int M, int N, int A[N][M], int B[M][N])
                     }
             return;
         case 64:
-            for (jj = 0;jj  < 64;jj = jj + 8){
-                for (ii = 0;ii < 64;ii = ii + 8){
-                    for (i = ii;i < ii + 4;++i){
+            for (jj = 0; jj < 64; jj += 8){
+                for (ii = 0; ii < 64; ii += 8){
+                    for (i = ii; i < ii + 4; ++i){
                         tmp1 = A[i][jj];
                         tmp2 = A[i][jj+1];
                         tmp3 = A[i][jj+2];
@@ -66,26 +66,26 @@ void transpose_submit(int M, int N, int A[N][M], int B[M][N])
                         B[jj+2][i+4] = tmp7;
                         B[jj+3][i+4] = tmp8;
                     }
-                    for (i = jj;i < jj + 4;++i){
-                        tmp1 = B[i][ii+4];
-                        tmp2 = B[i][ii+5];
-                        tmp3 = B[i][ii+6];
-                        tmp4 = B[i][ii+7];
-                        tmp5 = A[ii+4][i];
-                        tmp6 = A[ii+5][i];
-                        tmp7 = A[ii+6][i];
-                        tmp8 = A[ii+7][i];
-                        B[i][ii+4] = tmp5;
-                        B[i][ii+5] = tmp6;
-                        B[i][ii+6] = tmp7;
-                        B[i][ii+7] = tmp8;
-                        B[i+4][ii] = tmp1;
-                        B[i+4][ii+1] = tmp2;
-                        B[i+4][ii+2] = tmp3;
-                        B[i+4][ii+3] = tmp4;
+                    for (j = jj; j < jj + 4; ++j){
+                        tmp1 = B[j][ii+4];
+                        tmp2 = B[j][ii+5];
+                        tmp3 = B[j][ii+6];
+                        tmp4 = B[j][ii+7];
+                        tmp5 = A[ii+4][j];
+                        tmp6 = A[ii+5][j];
+                        tmp7 = A[ii+6][j];
+                        tmp8 = A[ii+7][j];
+                        B[j][ii+4] = tmp5;
+                        B[j][ii+5] = tmp6;
+                        B[j][ii+6] = tmp7;
+                        B[j][ii+7] = tmp8;
+                        B[j+4][ii] = tmp1;
+                        B[j+4][ii+1] = tmp2;
+                        B[j+4][ii+2] = tmp3;
+                        B[j+4][ii+3] = tmp4;
                     }
                     /*third and fourth block*/
-                    for (j = jj + 4;j < jj + 8;++j){
+                    for (j = jj + 4;j < jj + 8; ++j){
                         tmp4 = A[ii+4][j];
                         tmp1 = A[ii+5][j];
                         tmp2 = A[ii+6][j];
