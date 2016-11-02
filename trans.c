@@ -24,13 +24,80 @@ void transpose_submit(int M, int N, int A[N][M], int B[M][N])
 {
     int blockSize;
     int ii, jj, i, j;
+    int tmp1,tmp2,tmp3,tmp4,tmp5,tmp6,tmp7,tmp8;
     switch(M) {        
         case 32:
             blockSize = 8;
-            break;
+            int diag = 0;
+            int temp = 0;
+            for (jj = 0; jj < N; jj += blockSize)
+                for (ii = 0; ii < N; ii += blockSize)
+                    for (i = ii; i < ii + blockSize; ++i) {
+                        for (j = jj; j < jj + blockSize; ++j) {
+                            if (i != j)
+                                B[j][i] = A[i][j];
+                             else {
+                                temp = A[i][j];
+                                diag = i;
+                            }
+                        }
+                        if (ii == jj)
+                            B[diag][diag] = temp;
+                    }
+            return;
         case 64:
-            blockSize = 4;
-            break;
+            for (jj = 0;jj  < 64;jj = jj + 8){
+                for (ii = 0;ii < 64;ii = ii + 8){
+                    for (i = ii;i < ii + 4;++i){
+                        tmp1 = A[i][jj];
+                        tmp2 = A[i][jj+1];
+                        tmp3 = A[i][jj+2];
+                        tmp4 = A[i][jj+3];
+                        tmp5 = A[i][jj+4];
+                        tmp6 = A[i][jj+5];
+                        tmp7 = A[i][jj+6];
+                        tmp8 = A[i][jj+7];
+                        B[jj][i] = tmp1;
+                        B[jj+1][i] = tmp2;
+                        B[jj+2][i] = tmp3;
+                        B[jj+3][i] = tmp4;
+                        B[jj][i+4] = tmp5;
+                        B[jj+1][i+4] = tmp6;
+                        B[jj+2][i+4] = tmp7;
+                        B[jj+3][i+4] = tmp8;
+                    }
+                    for (i = jj;i < jj + 4;++i){
+                        tmp1 = B[i][ii+4];
+                        tmp2 = B[i][ii+5];
+                        tmp3 = B[i][ii+6];
+                        tmp4 = B[i][ii+7];
+                        tmp5 = A[ii+4][i];
+                        tmp6 = A[ii+5][i];
+                        tmp7 = A[ii+6][i];
+                        tmp8 = A[ii+7][i];
+                        B[i][ii+4] = tmp5;
+                        B[i][ii+5] = tmp6;
+                        B[i][ii+6] = tmp7;
+                        B[i][ii+7] = tmp8;
+                        B[i+4][ii] = tmp1;
+                        B[i+4][ii+1] = tmp2;
+                        B[i+4][ii+2] = tmp3;
+                        B[i+4][ii+3] = tmp4;
+                    }
+                    /*third and fourth block*/
+                    for (j = jj + 4;j < jj + 8;++j){
+                        tmp4 = A[ii+4][j];
+                        tmp1 = A[ii+5][j];
+                        tmp2 = A[ii+6][j];
+                        tmp3 = A[ii+7][j];
+                        B[j][ii+4] = tmp4;
+                        B[j][ii+5] = tmp1;
+                        B[j][ii+6] = tmp2;
+                        B[j][ii+7] = tmp3;
+                    }
+                }
+            }
+            return;
         default:
             blockSize = 16;
             for(ii = 0; ii < N; ii += blockSize) {
@@ -41,24 +108,6 @@ void transpose_submit(int M, int N, int A[N][M], int B[M][N])
             }
             return;
     }
-
-    int diag = 0;
-    int temp = 0;
-
-    for (jj = 0; jj < N; jj += blockSize)
-        for (ii = 0; ii < N; ii += blockSize)
-            for (i = ii; i < ii + blockSize; ++i) {
-                for (j = jj; j < jj + blockSize; ++j) {
-                    if (i != j)
-                        B[j][i] = A[i][j];
-                     else {
-                        temp = A[i][j];
-                        diag = i;
-                    }
-                }
-                if (ii == jj)
-                    B[diag][diag] = temp;
-            }
 }
 
 
@@ -119,4 +168,5 @@ int is_transpose(int M, int N, int A[N][M], int B[M][N])
     }
     return 1;
 }
+
 
